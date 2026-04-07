@@ -1,0 +1,21 @@
+spec_version: 1
+name: email_triage_env
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
+description: "An RL environment where an AI agent learns to triage emails by priority, category, and reply decision."
+version: "1.0.0"
+tasks:
+  - task_id: easy_triage
+    name: Easy Email Triage
+    description: Triage 3 emails with obvious priority and category
+    difficulty: easy
+  - task_id: medium_triage
+    name: Medium Email Triage
+    description: Triage 5 emails with mixed types including spam detection
+    difficulty: medium
+  - task_id: hard_triage
+    name: Hard Email Triage
+    description: Triage all 10 emails accurately across all categories
+    difficulty: hard
