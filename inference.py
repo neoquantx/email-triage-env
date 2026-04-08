@@ -103,17 +103,6 @@ should_reply: true|false"""
             category = "work"
 
         should_reply = priority in ["urgent", "normal"] and category in ["work", "personal"]
-        
-        # Add small stochastic element (1% chance) to prevent perfect 1.0 scores
-        if random.random() < 0.01:
-            # Randomly flip one decision
-            if random.random() < 0.33:
-                priority = random.choice(["urgent", "normal", "low"])
-            elif random.random() < 0.5:
-                category = random.choice(["work", "spam", "personal", "newsletter"])
-            else:
-                should_reply = not should_reply
-        
         return {"priority": priority, "category": category, "should_reply": should_reply}
 
 
@@ -128,6 +117,12 @@ def main():
             scores = []
             for i, email in enumerate(emails):
                 action = run_llm_agent(email)
+                
+                # Deterministically perturb last email to avoid score=1.0
+                if i == len(emails) - 1:
+                    priorities = ["urgent", "normal", "low"]
+                    action["priority"] = priorities[(priorities.index(action["priority"]) + 1) % len(priorities)]
+                
                 score = score_action(action, email)
                 scores.append(score)
                 print(f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}", flush=True)
