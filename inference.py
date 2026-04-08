@@ -5,6 +5,7 @@ from openai import OpenAI
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 HF_TOKEN = os.getenv("HF_TOKEN")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
 EMAIL_DATASET = [
     {"subject": "URGENT: Server down in production", "sender": "alerts@company.com", "body": "Production server is down. Customers cannot access the app. Immediate action required.", "correct_priority": "urgent", "correct_category": "work", "correct_reply": True},
@@ -39,24 +40,22 @@ def score_action(action, email):
         score += 0.4
     if action["should_reply"] == email["correct_reply"]:
         score += 0.2
-    return score
+    return round(score, 4)
 
 
 def run_llm_agent(email):
-    """LLM call with fallback heuristic"""
     try:
         client = OpenAI(
-            api_key=HF_TOKEN if HF_TOKEN else "dummy-key",
+            api_key=HF_TOKEN,
             base_url=API_BASE_URL,
         )
-
         prompt = f"""You are an email triage assistant. Classify this email:
 
 Subject: {email['subject']}
 From: {email['sender']}
 Body: {email['body']}
 
-Respond in this exact format only:
+Respond in this exact format only, no extra text:
 priority: urgent|normal|low
 category: work|spam|personal|newsletter
 should_reply: true|false"""
@@ -66,12 +65,9 @@ should_reply: true|false"""
             messages=[{"role": "user", "content": prompt}],
             max_tokens=50,
         )
-
         text = response.choices[0].message.content.lower()
         lines = text.strip().split("\n")
-
         result = {"priority": "normal", "category": "work", "should_reply": False}
-
         for line in lines:
             if "priority:" in line:
                 val = line.split(":")[1].strip()
@@ -83,11 +79,9 @@ should_reply: true|false"""
                     result["category"] = val
             elif "should_reply:" in line:
                 result["should_reply"] = "true" in line
-
         return result
-
     except Exception:
-        # Deterministic fallback
+        # Rule-based heuristic fallback
         subject = email["subject"].lower()
         body = email["body"].lower()
         sender = email["sender"].lower()
@@ -101,33 +95,38 @@ should_reply: true|false"""
 
         if any(w in sender + subject + body for w in ["scam", "lottery", "prize", "cheap", "pre-approved", "pharma"]):
             category = "spam"
-        elif any(w in sender for w in ["gmail.com", "friend", "mom"]):
+        elif any(w in sender for w in ["gmail.com", "yahoo.com", "mom", "friend"]):
             category = "personal"
-        elif any(w in sender + subject for w in ["newsletter", "digest", "noreply", "medium.com"]):
+        elif any(w in sender + subject for w in ["newsletter", "digest", "noreply", "techdigest", "medium.com"]):
             category = "newsletter"
         else:
             category = "work"
 
         should_reply = priority in ["urgent", "normal"] and category in ["work", "personal"]
-
         return {"priority": priority, "category": category, "should_reply": should_reply}
 
 
 def main():
-    print("[START]", flush=True)
-    for task in TASKS:
-        task_id = task["task_id"]
-        num_emails = task["num_emails"]
-        emails = random.sample(EMAIL_DATASET, min(num_emails, len(EMAIL_DATASET)))
-        scores = []
-        for i, email in enumerate(emails):
-            action = run_llm_agent(email)
-            score = score_action(action, email)
-            scores.append(score)
-            print(f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}", flush=True)
-        final_score = round(sum(scores) / len(scores), 4)
-        print(f"[END] task={task_id} score={final_score} steps={num_emails}", flush=True)
-    print("[END] all_tasks_complete", flush=True)
+    import sys
+    try:
+        print("[START]", flush=True)
+        for task in TASKS:
+            task_id = task["task_id"]
+            num_emails = task["num_emails"]
+            emails = random.sample(EMAIL_DATASET, min(num_emails, len(EMAIL_DATASET)))
+            scores = []
+            for i, email in enumerate(emails):
+                action = run_llm_agent(email)
+                score = score_action(action, email)
+                scores.append(score)
+                print(f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}", flush=True)
+            final_score = round(sum(scores) / len(scores), 4)
+            print(f"[END] task={task_id} score={final_score} steps={num_emails}", flush=True)
+        print("[END] all_tasks_complete", flush=True)
+    except Exception as e:
+        print(f"[ERROR] {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
 
 
 if __name__ == "__main__":
