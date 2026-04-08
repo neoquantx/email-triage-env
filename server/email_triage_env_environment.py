@@ -1,4 +1,5 @@
 from uuid import uuid4
+import os
 import random
 
 from openenv.core.env_server.interfaces import Environment
@@ -128,7 +129,7 @@ class EmailTriageEnvironment(Environment):
         self._emails = []
         self._current_index = 0
         self._scores = []
-        self._task_id = "medium_triage"
+        self._task_id = os.getenv("TASK_ID", "medium_triage")
 
     def reset(self) -> EmailTriageObservation:
         self._state = State(episode_id=str(uuid4()), step_count=0)
