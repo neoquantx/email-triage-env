@@ -60,7 +60,7 @@ def get_grader():
 
 @app.get("/baseline")
 def get_baseline():
-    """Runs a simple baseline agent and returns scores for all 3 tasks."""
+    """Runs a smart heuristic baseline agent and returns scores for all 3 tasks."""
     results = {}
     for task in TASKS:
         task_id = task["task_id"]
@@ -68,10 +68,33 @@ def get_baseline():
         emails = random.sample(EMAIL_DATASET, min(num_emails, len(EMAIL_DATASET)))
         scores = []
         for email in emails:
+            # Smart heuristic agent (not random)
+            subject = email["subject"].lower()
+            body = email["body"].lower()
+            sender = email["sender"].lower()
+
+            if any(w in subject + body for w in ["urgent", "critical", "immediately", "breach", "down", "legal"]):
+                priority = "urgent"
+            elif any(w in subject + body for w in ["meeting", "birthday", "bbq", "appointment"]):
+                priority = "normal"
+            else:
+                priority = "low"
+
+            if any(w in sender + subject + body for w in ["scam", "lottery", "prize", "cheap", "pre-approved", "pharma"]):
+                category = "spam"
+            elif any(w in sender for w in ["gmail.com", "yahoo.com", "mom", "friend"]):
+                category = "personal"
+            elif any(w in sender + subject for w in ["newsletter", "digest", "noreply", "techdigest", "medium.com"]):
+                category = "newsletter"
+            else:
+                category = "work"
+
+            should_reply = priority in ["urgent", "normal"] and category in ["work", "personal"]
+
             action = EmailTriageAction(
-                priority=random.choice(["urgent", "normal", "low"]),
-                category=random.choice(["work", "spam", "personal", "newsletter"]),
-                should_reply=random.choice([True, False])
+                priority=priority,
+                category=category,
+                should_reply=should_reply
             )
             score = 0.0
             if action.priority == email["correct_priority"]:
@@ -83,7 +106,6 @@ def get_baseline():
             scores.append(score)
         results[task_id] = round(sum(scores) / len(scores), 4)
     return JSONResponse({"baseline_scores": results})
-
 
 def main(host: str = "0.0.0.0", port: int = 8000):
     import uvicorn
