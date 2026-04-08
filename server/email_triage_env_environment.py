@@ -93,6 +93,46 @@ EMAIL_DATASET = [
         "correct_category": "spam",
         "correct_reply": False,
     },
+    {
+        "subject": "Re: Project deadline extension request",
+        "sender": "client@bigcorp.com",
+        "body": "We need to discuss the project timeline. The current deadline is not feasible given the scope changes. Can we schedule a call today?",
+        "correct_priority": "urgent",
+        "correct_category": "work",
+        "correct_reply": True,
+    },
+    {
+        "subject": "You have been pre-approved for a loan!",
+        "sender": "loans@quickcash-offers.net",
+        "body": "Dear customer, you have been pre-approved for a $50,000 loan. No credit check needed. Apply now!",
+        "correct_priority": "low",
+        "correct_category": "spam",
+        "correct_reply": False,
+    },
+    {
+        "subject": "Doctor appointment reminder",
+        "sender": "noreply@cityhealth.com",
+        "body": "This is a reminder that you have an appointment scheduled for tomorrow at 2:00 PM with Dr. Smith.",
+        "correct_priority": "normal",
+        "correct_category": "personal",
+        "correct_reply": False,
+    },
+    {
+        "subject": "URGENT: Legal notice - response required within 24 hours",
+        "sender": "legal@lawfirm.com",
+        "body": "Our client has filed a complaint against your company. You are required to respond within 24 hours to avoid further legal action.",
+        "correct_priority": "urgent",
+        "correct_category": "work",
+        "correct_reply": True,
+    },
+    {
+        "subject": "Weekly digest - top stories",
+        "sender": "digest@medium.com",
+        "body": "Your weekly reading list is ready. Top stories in technology, science and business curated just for you.",
+        "correct_priority": "low",
+        "correct_category": "newsletter",
+        "correct_reply": False,
+    },
 ]
 
 # Task definitions
@@ -107,15 +147,15 @@ TASKS = [
     {
         "task_id": "medium_triage",
         "name": "Medium Email Triage",
-        "description": "Triage 5 emails with mixed types including spam detection",
-        "num_emails": 5,
+        "description": "Triage 7 emails with mixed types including spam detection",
+        "num_emails": 7,
         "difficulty": "medium",
     },
     {
         "task_id": "hard_triage",
         "name": "Hard Email Triage",
-        "description": "Triage all 10 emails accurately across all categories",
-        "num_emails": 10,
+        "description": "Triage all 15 emails accurately across all categories",
+        "num_emails": 15,
         "difficulty": "hard",
     },
 ]
