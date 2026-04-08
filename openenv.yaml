@@ -11,11 +11,41 @@ tasks:
     name: Easy Email Triage
     description: Triage 3 emails with obvious priority and category
     difficulty: easy
+    grader:
+      type: rule_based
+      metrics:
+        - priority_correct
+        - category_correct
+        - reply_correct
+      weights:
+        priority_correct: 0.4
+        category_correct: 0.4
+        reply_correct: 0.2
   - task_id: medium_triage
     name: Medium Email Triage
     description: Triage 5 emails with mixed types including spam detection
     difficulty: medium
+    grader:
+      type: rule_based
+      metrics:
+        - priority_correct
+        - category_correct
+        - reply_correct
+      weights:
+        priority_correct: 0.4
+        category_correct: 0.4
+        reply_correct: 0.2
   - task_id: hard_triage
     name: Hard Email Triage
     description: Triage all 10 emails accurately across all categories
     difficulty: hard
+    grader:
+      type: rule_based
+      metrics:
+        - priority_correct
+        - category_correct
+        - reply_correct
+      weights:
+        priority_correct: 0.4
+        category_correct: 0.4
+        reply_correct: 0.2

@@ -143,6 +143,15 @@ TASKS = [
         "description": "Triage 3 emails with obvious priority and category",
         "num_emails": 3,
         "difficulty": "easy",
+        "grader": {
+            "type": "rule_based",
+            "metrics": ["priority_correct", "category_correct", "reply_correct"],
+            "weights": {
+                "priority_correct": 0.4,
+                "category_correct": 0.4,
+                "reply_correct": 0.2,
+            },
+        },
     },
     {
         "task_id": "medium_triage",
@@ -150,6 +159,15 @@ TASKS = [
         "description": "Triage 7 emails with mixed types including spam detection",
         "num_emails": 7,
         "difficulty": "medium",
+        "grader": {
+            "type": "rule_based",
+            "metrics": ["priority_correct", "category_correct", "reply_correct"],
+            "weights": {
+                "priority_correct": 0.4,
+                "category_correct": 0.4,
+                "reply_correct": 0.2,
+            },
+        },
     },
     {
         "task_id": "hard_triage",
@@ -157,6 +175,15 @@ TASKS = [
         "description": "Triage all 15 emails accurately across all categories",
         "num_emails": 15,
         "difficulty": "hard",
+        "grader": {
+            "type": "rule_based",
+            "metrics": ["priority_correct", "category_correct", "reply_correct"],
+            "weights": {
+                "priority_correct": 0.4,
+                "category_correct": 0.4,
+                "reply_correct": 0.2,
+            },
+        },
     },
 ]
 
