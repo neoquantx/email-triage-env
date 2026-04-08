@@ -5,7 +5,6 @@ from openai import OpenAI
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
 HF_TOKEN = os.getenv("HF_TOKEN")
-LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
 
 EMAIL_DATASET = [
     {"subject": "URGENT: Server down in production", "sender": "alerts@company.com", "body": "Production server is down. Customers cannot access the app. Immediate action required.", "correct_priority": "urgent", "correct_category": "work", "correct_reply": True},
@@ -44,19 +43,20 @@ def score_action(action, email):
 
 
 def run_llm_agent(email):
-    """Use OpenAI API to triage an email."""
+    """LLM call with fallback heuristic"""
     try:
         client = OpenAI(
             api_key=HF_TOKEN if HF_TOKEN else "dummy-key",
             base_url=API_BASE_URL,
         )
+
         prompt = f"""You are an email triage assistant. Classify this email:
 
 Subject: {email['subject']}
 From: {email['sender']}
 Body: {email['body']}
 
-Respond in this exact format only, no extra text:
+Respond in this exact format only:
 priority: urgent|normal|low
 category: work|spam|personal|newsletter
 should_reply: true|false"""
@@ -66,9 +66,12 @@ should_reply: true|false"""
             messages=[{"role": "user", "content": prompt}],
             max_tokens=50,
         )
+
         text = response.choices[0].message.content.lower()
         lines = text.strip().split("\n")
+
         result = {"priority": "normal", "category": "work", "should_reply": False}
+
         for line in lines:
             if "priority:" in line:
                 val = line.split(":")[1].strip()
@@ -80,14 +83,15 @@ should_reply: true|false"""
                     result["category"] = val
             elif "should_reply:" in line:
                 result["should_reply"] = "true" in line
+
         return result
+
     except Exception:
-        # Fallback to rule-based heuristic (not random)
+        # Deterministic fallback
         subject = email["subject"].lower()
         body = email["body"].lower()
         sender = email["sender"].lower()
 
-        # Priority heuristic
         if any(w in subject + body for w in ["urgent", "critical", "immediately", "breach", "down", "legal"]):
             priority = "urgent"
         elif any(w in subject + body for w in ["meeting", "birthday", "bbq", "appointment"]):
@@ -95,37 +99,48 @@ should_reply: true|false"""
         else:
             priority = "low"
 
-        # Category heuristic
         if any(w in sender + subject + body for w in ["scam", "lottery", "prize", "cheap", "pre-approved", "pharma"]):
             category = "spam"
-        elif any(w in sender for w in ["gmail.com", "yahoo.com", "hotmail.com", "mom", "friend"]):
+        elif any(w in sender for w in ["gmail.com", "friend", "mom"]):
             category = "personal"
-        elif any(w in sender + subject for w in ["newsletter", "digest", "noreply", "techdigest", "medium.com"]):
+        elif any(w in sender + subject for w in ["newsletter", "digest", "noreply", "medium.com"]):
             category = "newsletter"
         else:
             category = "work"
 
-        # Reply heuristic
         should_reply = priority in ["urgent", "normal"] and category in ["work", "personal"]
 
         return {"priority": priority, "category": category, "should_reply": should_reply}
 
 
 def main():
-    print("[START]", flush=True)
+    random.seed(42)  # IMPORTANT: stable results
+
     for task in TASKS:
         task_id = task["task_id"]
         num_emails = task["num_emails"]
+
+        print(f"[START] task={task_id}", flush=True)
+
         emails = random.sample(EMAIL_DATASET, min(num_emails, len(EMAIL_DATASET)))
         scores = []
+
         for i, email in enumerate(emails):
             action = run_llm_agent(email)
             score = score_action(action, email)
             scores.append(score)
-            print(f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}", flush=True)
+
+            print(
+                f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}",
+                flush=True
+            )
+
         final_score = round(sum(scores) / len(scores), 4)
-        print(f"[END] task={task_id} score={final_score} steps={num_emails}", flush=True)
-    print("[END] all_tasks_complete", flush=True)
+
+        print(
+            f"[END] task={task_id} score={final_score} steps={len(scores)}",
+            flush=True
+        )
 
 
 if __name__ == "__main__":
