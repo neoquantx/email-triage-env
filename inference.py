@@ -114,33 +114,20 @@ should_reply: true|false"""
 
 
 def main():
-    random.seed(42)  # IMPORTANT: stable results
-
+    print("[START]", flush=True)
     for task in TASKS:
         task_id = task["task_id"]
         num_emails = task["num_emails"]
-
-        print(f"[START] task={task_id}", flush=True)
-
         emails = random.sample(EMAIL_DATASET, min(num_emails, len(EMAIL_DATASET)))
         scores = []
-
         for i, email in enumerate(emails):
             action = run_llm_agent(email)
             score = score_action(action, email)
             scores.append(score)
-
-            print(
-                f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}",
-                flush=True
-            )
-
+            print(f"[STEP] task={task_id} step={i+1} reward={round(score, 4)}", flush=True)
         final_score = round(sum(scores) / len(scores), 4)
-
-        print(
-            f"[END] task={task_id} score={final_score} steps={len(scores)}",
-            flush=True
-        )
+        print(f"[END] task={task_id} score={final_score} steps={num_emails}", flush=True)
+    print("[END] all_tasks_complete", flush=True)
 
 
 if __name__ == "__main__":
