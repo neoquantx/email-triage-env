@@ -40,8 +40,8 @@ def score_action(action, email):
 
 def run_llm_agent(email):
     client = OpenAI(
-        api_key=HF_TOKEN or "dummy",
-        base_url=API_BASE_URL if "openai" not in API_BASE_URL else None,
+        api_key=HF_TOKEN if HF_TOKEN else "dummy-key",
+        base_url=API_BASE_URL,
     )
     prompt = f"""You are an email triage assistant. Classify this email:
 
