@@ -109,10 +109,10 @@ should_reply: true|false"""
 def main():
     import sys
     try:
-        print("[START]", flush=True)
         for task in TASKS:
             task_id = task["task_id"]
             num_emails = task["num_emails"]
+            print(f"[START] task={task_id}", flush=True)
             emails = random.sample(EMAIL_DATASET, min(num_emails, len(EMAIL_DATASET)))
             scores = []
             for i, email in enumerate(emails):
